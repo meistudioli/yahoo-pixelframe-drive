@@ -1,0 +1,25 @@
+{
+  "name": "yahoo-pixelframe-drive",
+  "version": "1.0.0",
+  "description": "<yahoo-pixelframe-drive /> is a video library. It combine several web components and bring add / edit / delete / search features together.",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meistudioli/yahoo-pixelframe-drive.git"
+  },
+  "keywords": [
+    "web",
+    "front-end",
+    "web component",
+    "video library"
+  ],
+  "author": "Paul Li",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/meistudioli/yahoo-pixelframe-drive/issues"
+  },
+  "homepage": "https://github.com/meistudioli/yahoo-pixelframe-drive#readme"
+}
