@@ -682,7 +682,14 @@ export const input = `
   --border-color: var(--err-color);
 }
 
+/*
 .input-set:not(:has(.input-set__em:empty)) {
+  --border-color: var(--err-color);
+  --err-display: flex;
+}
+*/
+
+.input-set:has(.input-set__em):not(:has(.input-set__em:empty)) {
   --border-color: var(--err-color);
   --err-display: flex;
 }
