@@ -6,7 +6,6 @@ import {
   buttons as _fujiButtons
 } from './fuji-css.js';
 import Mustache from './mustache.js';
-
 import 'https://unpkg.com/yahoo-pixelframe-uploader/mjs/wc-yahoo-pixelframe-uploader.js';
 import 'https://unpkg.com/msc-dialogs/mjs/wc-msc-dialogs.js';
 import 'https://unpkg.com/msc-circle-progress/mjs/wc-msc-circle-progress.js';
@@ -56,13 +55,20 @@ const defaults = {
         }
       }
     }
+  },
+  webservice: {
+    listings: 'https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/me/videos?status=ACTIVE',
+    create: 'https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos',
+    edit: 'https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}',
+    delete: 'https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}'
   }
 };
 
 const booleanAttrs = []; // booleanAttrs default should be false
 const objectAttrs = ['uploader'];
 const custumEvents = {
-  pick: 'yahoo-pixelframe-drive-pick'
+  pick: 'yahoo-pixelframe-drive-pick',
+  error: 'yahoo-pixelframe-drive-error'
 };
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
@@ -1436,6 +1442,7 @@ export class YahooPixelframeDrive extends HTMLElement {
     this.#data = {
       controller: '',
       dragCount: 0,
+      listingsFetched: false,
       listings: {},
       orders: []
     };
@@ -1551,6 +1558,8 @@ export class YahooPixelframeDrive extends HTMLElement {
         document.body.addEventListener(event, this._hintHandler, { signal, capture:true });
       }
     );
+
+    this.#buildStage();
   }
 
   disconnectedCallback() {
@@ -1579,6 +1588,21 @@ export class YahooPixelframeDrive extends HTMLElement {
         case 'maxpickcount': {
           const num = +newValue;
           this.#config[attrName] = (isNaN(num) || num < 0) ? defaults[attrName] : num;
+          break;
+        }
+
+        case 'webservice': {
+          let values = {};
+          try {
+            values = JSON.parse(newValue);
+          } catch(err) {
+            console.warn(`${_wcl.classToTagName(this.constructor.name)}: ${err.message}`);
+          }
+
+          this.#config[attrName] = {
+            ...defaults[attrName],
+            ...values
+          };
           break;
         }
 
@@ -1717,6 +1741,23 @@ export class YahooPixelframeDrive extends HTMLElement {
     return this.#config.uploader;
   }
 
+  set webservice(value) {
+    if (value) {
+      const newValue = {
+        ...defaults.webservice,
+        ...this.webservice,
+        ...(typeof value === 'string' ? JSON.parse(value) : value)
+      };
+      this.setAttribute('webservice', JSON.stringify(newValue));
+    } else {
+      this.removeAttribute('webservice');
+    }
+  }
+
+  get webservice() {
+    return this.#config.webservice;
+  }
+
   get open() {
     return this.#nodes.dialogDrive.open;
   }
@@ -1745,6 +1786,73 @@ export class YahooPixelframeDrive extends HTMLElement {
     nodeDescription[action === 'edit' ? 'value' : 'textContent'] = description;
 
     return dialog;
+  }
+
+  #getUnitId() {
+    return `unit-${_wcl.getUUID()}`;
+  }
+
+  async #buildStage() {
+    const { listingsFetched } = this.#data;
+    const { gallery } = this.#nodes;
+
+    if (listingsFetched) {
+      return;
+    }
+
+    this.#data.listingsFetched = true;
+
+    try {
+      this.#data.listings = [];
+      this.#data.orders = [];
+
+      const units = [];
+      const { videos = [] } = await this.#fetchListings();
+      
+      videos.forEach(
+        (result) => {
+          const id = this.#getUnitId();
+          const {
+            title = '',
+            description = '',
+            thumbnail: {
+              url = ''
+            } = {}
+          } = result;
+
+          units.push({
+            id,
+            thumbnail: url,
+            status: 'done',
+            freeze: false
+          });
+
+          this.#data.listings[id] = {
+            id,
+            type: 'video',
+            thumbnail: url,
+            name: title,
+            duration: 3600,
+            status: 'done',
+            description,
+            result 
+          };
+
+          this.#data.orders.unshift(id);
+        }
+      );
+
+      const unitsString = Mustache.render(templateUnit.innerHTML, { units });
+      gallery.insertAdjacentHTML('afterbegin', unitsString);
+    } catch(error) {
+      console.warn(`${_wcl.classToTagName(this.constructor.name)}: ${error}`);
+    
+      const { message, cause } = error;
+      this.#fireEvent(custumEvents.error, {
+        message,
+        ...(cause && { cause })
+      });
+    }
   }
 
   _onGalleryClick(evt) {
@@ -1806,6 +1914,171 @@ export class YahooPixelframeDrive extends HTMLElement {
     }
   }
 
+  async #fetchListings() {
+    const { listings: apiUrl } = this.webservice;
+    const base = !/^http(s)?:\/\/.*/.test(apiUrl) ? window.location.origin : undefined;
+    const fetchUrl = new window.URL(apiUrl, base);
+    const params = {
+      includeVideoMetadata: true,
+      limit: 100
+    };
+
+    Object.keys(params).forEach((key) => fetchUrl.searchParams.set(key, params[key]));
+
+    return await fetch(
+      fetchUrl.toString(),
+      {
+        headers: {
+          'content-type': 'application/json'
+        },
+        credentials: 'include',
+        method: 'GET',
+        mode: 'cors'
+      }
+    )
+      .then(
+        async (response) => {
+          if (!response.ok) {
+            const contentType = response.headers.get('content-type');
+            let cause = '';
+
+            if (contentType && contentType.includes('application/json')) {
+              cause = await response.json();
+            } else {
+              cause = await response.text();
+            }
+
+            throw new Error('Network response was not OK.', {
+              cause
+            });
+          }
+
+          return await response.json();
+        }
+      );
+  }
+
+  async #fetchVideoCreate(payload) {
+    const { create:apiUrl } = this.webservice;
+    const base = !/^http(s)?:\/\/.*/.test(apiUrl) ? window.location.origin : undefined;
+    const fetchUrl = new window.URL(apiUrl, base);
+
+    return await fetch(
+      fetchUrl.toString(),
+      {
+        headers: {
+          'content-type': 'application/json'
+        },
+        credentials: 'include',
+        method: 'POST',
+        mode: 'cors',
+        body: JSON.stringify(payload)
+      }
+    )
+      .then(
+        async (response) => {
+          if (!response.ok) {
+            const contentType = response.headers.get('content-type');
+            let cause = '';
+
+            if (contentType && contentType.includes('application/json')) {
+              cause = await response.json();
+            } else {
+              cause = await response.text();
+            }
+
+            throw new Error('Network response was not OK.', {
+              cause
+            });
+          }
+
+          return await response.json();
+        }
+      );
+  }
+
+  async #fetchVideoEdit({ videoId, title, description = '' }) {
+    const { edit } = this.webservice;
+    const apiUrl = edit.replace(/\{\{videoId\}\}/, videoId);
+    const base = !/^http(s)?:\/\/.*/.test(apiUrl) ? window.location.origin : undefined;
+    const fetchUrl = new window.URL(apiUrl, base);
+    const payload = {
+      title,
+      description
+    };
+
+    return await fetch(
+      fetchUrl.toString(),
+      {
+        headers: {
+          'content-type': 'application/json'
+        },
+        credentials: 'include',
+        method: 'PUT',
+        mode: 'cors',
+        body: JSON.stringify(payload)
+      }
+    )
+      .then(
+        async (response) => {
+          if (!response.ok) {
+            const contentType = response.headers.get('content-type');
+            let cause = '';
+
+            if (contentType && contentType.includes('application/json')) {
+              cause = await response.json();
+            } else {
+              cause = await response.text();
+            }
+
+            throw new Error('Network response was not OK.', {
+              cause
+            });
+          }
+
+          return await response.json();
+        }
+      );
+  }
+
+  async #fetchVideoDelete({ videoId }) {
+    const apiUrl = this.webservice.delete.replace(/\{\{videoId\}\}/, videoId);
+    const base = !/^http(s)?:\/\/.*/.test(apiUrl) ? window.location.origin : undefined;
+    const fetchUrl = new window.URL(apiUrl, base);
+
+    return await fetch(
+      fetchUrl.toString(),
+      {
+        headers: {
+          'content-type': 'application/json'
+        },
+        credentials: 'include',
+        method: 'DELETE',
+        mode: 'cors'
+      }
+    )
+      .then(
+        async (response) => {
+          if (!response.ok) {
+            const contentType = response.headers.get('content-type');
+            let cause = '';
+
+            if (contentType && contentType.includes('application/json')) {
+              cause = await response.json();
+            } else {
+              cause = await response.text();
+            }
+
+            throw new Error('Network response was not OK.', {
+              cause
+            });
+          }
+
+          return response.status === 204 ? true : await response.json();
+        }
+      );
+  }
+
   _uploaderHandler(evt) {
     const { type } = evt;
     const { uploader, gallery } = this.#nodes;
@@ -1825,12 +2098,32 @@ export class YahooPixelframeDrive extends HTMLElement {
         const { results } = evt.detail;
 
         results.forEach(
-          (data) => {
-            const { result, id } = data;
+          async (data) => {
+            const { result, name: title, id } = data;
 
             if (this.#data.listings[id] && result) {
-              this.#data.listings[id].result = { ...result };
-            } 
+              try {
+                const { id: videoId } = result;
+                await this.#fetchVideoCreate({ videoId, title });
+
+                this.#data.listings[id].result = { ...result };
+              } catch(error) {
+                console.warn(`${_wcl.classToTagName(this.constructor.name)}: ${error}`);
+
+                const { message, cause } = error;
+                this.#fireEvent(custumEvents.error, {
+                  message,
+                  ...(cause && { cause })
+                });
+
+                const unit = gallery.querySelector(`[data-id=${id}]`);
+                if (unit) {
+                  this.#data.listings[id].status = 'error';
+                  unit.dataset.status = 'error';
+                  unit.querySelector('input').disabled = true;
+                }
+              }
+            }
           }
         );
 
@@ -2003,15 +2296,29 @@ export class YahooPixelframeDrive extends HTMLElement {
           return;
         }
         
-        // TODO: fetch edit api
-
         const id = fd['id'];
         if (this.#data.listings[id]) {
-          this.#data.listings[id] = {
-            ...this.#data.listings[id],
-            name: fd['title'].trim(),
-            description: fd['description'].trim()
-          };
+          try {
+            const videoId = this.#data.listings[id]?.result?.id;
+            const title = fd['title'].trim();
+            const description = fd['description'].trim();
+
+            await this.#fetchVideoEdit({ videoId, title, description });
+
+            this.#data.listings[id] = {
+              ...this.#data.listings[id],
+              name: title,
+              description
+            };
+          } catch(error) {
+            console.warn(`${_wcl.classToTagName(this.constructor.name)}: ${error}`);
+          
+            const { message, cause } = error;
+            this.#fireEvent(custumEvents.error, {
+              message,
+              ...(cause && { cause })
+            });
+          }
         }
 
         dialogEdit.close();
@@ -2037,9 +2344,20 @@ export class YahooPixelframeDrive extends HTMLElement {
       }
 
       case 'submit': {
-        // TODO: fetch delete api
+        try {
+          const videoId = this.#data.listings[id]?.result?.id;
 
-        this.#deleteUnit(id);
+          await this.#fetchVideoDelete({ videoId });
+          this.#deleteUnit(id);
+        } catch(error) {
+          console.warn(`${_wcl.classToTagName(this.constructor.name)}: ${error}`);
+        
+          const { message, cause } = error;
+          this.#fireEvent(custumEvents.error, {
+            message,
+            ...(cause && { cause })
+          });
+        }
 
         dialogDelete.close();
         break;
@@ -2102,11 +2420,19 @@ export class YahooPixelframeDrive extends HTMLElement {
 
     const picked = ids.reduce(
       (acc, id) => {
-        const { result } = this.#data.listings?.[id] || {};
+        const {
+          result,
+          name: title = '',
+          description = ''
+        } = this.#data.listings?.[id] || {};
 
         return !result
           ? acc
-          : acc.concat({ ...result });
+          : acc.concat({
+              title,
+              description,
+              ...window.structuredClone(result)
+            });
       }
     , []);
 

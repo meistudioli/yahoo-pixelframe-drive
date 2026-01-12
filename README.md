@@ -70,6 +70,12 @@ Put &lt;yahoo-pixelframe-drive /> into HTML document.
             }
           }
         }
+      },
+      "webservice": {
+        "listings": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/me/videos?status=ACTIVE",
+        "create": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos",
+        "edit": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}",
+        "delete": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}"
       }
     }
   </script>
@@ -145,6 +151,12 @@ const config = {
         }
       }
     }
+  },
+  "webservice": {
+    "listings": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/me/videos?status=ACTIVE",
+    "create": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos",
+    "edit": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}",
+    "delete": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}"
   }
 };
 
@@ -262,6 +274,21 @@ Set uploader config. &lt;yahoo-pixelframe-drive /> applied [&lt;yahoo-pixelframe
 </yahoo-pixelframe-drive>
 ```
 
+- **webservice**
+
+Set webservice config. Developers could set these config for save or gather exist video information.
+
+`listings`：API for gather current user's exist video information.\
+`create`：API for create video.\
+`edit`：API for video title / description edit. Developers colud apply for `{{videoId}}` string replacement.\
+`delete`：API for video delete. Developers colud apply for `{{videoId}}` string replacement.
+
+```html
+<yahoo-pixelframe-drive webservice='{"listings":"https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/me/videos?status=ACTIVE","create":"https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos","edit":"https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}","delete":"https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}"}'>
+  ...
+</yahoo-pixelframe-drive>
+```
+
 ## Properties
 | Property Name | Type | Description |
 | ----------- | ----------- | ----------- |
@@ -269,12 +296,14 @@ Set uploader config. &lt;yahoo-pixelframe-drive /> applied [&lt;yahoo-pixelframe
 | maxuploadcount | Integer | Getter / Setter &lt;yahoo-pixelframe-drive />'s maxuploadcount. |
 | placeholder | String | Getter / Setter &lt;yahoo-pixelframe-drive />'s search field placehoder. |
 | uploader | Object | Getter / Setter &lt;yahoo-pixelframe-drive />'s uploader config. （Developer could check &lt;yahoo-pixelframe-uploader />'s document） |
+| webservice | Object | Getter / Setter &lt;yahoo-pixelframe-drive />'s webservice config. |
 | open | Boolean | Getter &lt;yahoo-pixelframe-drive />'s open state. |
 
-## Event
+## Events
 | Event Signature | Description |
 | ----------- | ----------- |
 | yahoo-pixelframe-drive-pick | Fired when <yahoo-pixelframe-drive /> user picked video files. Developers could gather picked information through `event.detail`. |
+| yahoo-pixelframe-drive-error | Fired when <yahoo-pixelframe-drive /> error occured. Developers could gather information through `event.detail`. |
 
 ## Mathods
 | Mathod Signature | Description |
@@ -288,5 +317,3 @@ Set uploader config. &lt;yahoo-pixelframe-drive /> applied [&lt;yahoo-pixelframe
 - [&lt;yahoo-pixelframe-uploader />](https://blog.lalacube.com/mei/webComponent_yahoo-pixelframe-uploader.html)
 - [&lt;msc-dialogs />](https://blog.lalacube.com/mei/webComponent_msc-dialogs.html)
 - [&lt;msc-circle-progress />](https://blog.lalacube.com/mei/webComponent_msc-circle-progress.html)
-
-
