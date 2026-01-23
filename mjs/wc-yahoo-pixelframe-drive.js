@@ -83,6 +83,7 @@ ${_fujiButtons}
 :host {
   position: relative;
   display: block;
+  font-family: 'PingFang TC', system-ui, sans-serif;
 }
 
 .main {
@@ -2366,7 +2367,7 @@ export class YahooPixelframeDrive extends HTMLElement {
   }
 
   _onSearchInput() {
-    const { formSearch, gallery } = this.#nodes;
+    const { formSearch, infoPickCount, gallery } = this.#nodes;
     const formData = new FormData(formSearch);
     const fd = Object.fromEntries(formData.entries());
     const q = fd['q'].toLowerCase().trim();
@@ -2404,6 +2405,7 @@ export class YahooPixelframeDrive extends HTMLElement {
       gallery.insertAdjacentHTML('afterbegin', unitsString);
     }
 
+    infoPickCount.textContent = 0;
     this.#checkBtnPick();
   }
 
