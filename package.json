@@ -1,6 +1,6 @@
 {
   "name": "yahoo-pixelframe-drive",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "<yahoo-pixelframe-drive /> is a video library. It combine several web components and bring add / edit / delete / search features together.",
   "main": "index.html",
   "scripts": {
