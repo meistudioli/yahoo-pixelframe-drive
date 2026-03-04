@@ -6,9 +6,9 @@ import {
   buttons as _fujiButtons
 } from './fuji-css.js';
 import Mustache from './mustache.js';
-import 'https://unpkg.com/yahoo-pixelframe-uploader/mjs/wc-yahoo-pixelframe-uploader.js';
-import 'https://unpkg.com/msc-dialogs/mjs/wc-msc-dialogs.js';
-import 'https://unpkg.com/msc-circle-progress/mjs/wc-msc-circle-progress.js';
+import './wc-yahoo-pixelframe-uploader.js';
+import './wc-msc-dialogs.js';
+import './wc-msc-circle-progress.js';
 
 /*
  reference:
@@ -57,10 +57,10 @@ const defaults = {
     }
   },
   webservice: {
-    listings: 'https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/me/videos?status=ACTIVE',
-    create: 'https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos',
-    edit: 'https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}',
-    delete: 'https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}'
+    listings: 'https://tw.bid.yahoo.com/api/reeldeal/v1/me/videos?status=ACTIVE',
+    create: 'https://tw.bid.yahoo.com/api/reeldeal/v1/videos',
+    edit: 'https://tw.bid.yahoo.com/api/reeldeal/v1/videos/{{videoId}}',
+    delete: 'https://tw.bid.yahoo.com/api/reeldeal/v1/videos/{{videoId}}'
   }
 };
 
