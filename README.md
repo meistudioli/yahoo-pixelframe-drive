@@ -72,10 +72,10 @@ Put &lt;yahoo-pixelframe-drive /> into HTML document.
         }
       },
       "webservice": {
-        "listings": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/me/videos?status=ACTIVE",
-        "create": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos",
-        "edit": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}",
-        "delete": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}"
+        "listings": "https://tw.bid.yahoo.com/api/reeldeal/v1/me/videos?status=ACTIVE",
+        "create": "https://tw.bid.yahoo.com/api/reeldeal/v1/videos",
+        "edit": "https://tw.bid.yahoo.com/api/reeldeal/v1/videos/{{videoId}}",
+        "delete": "https://tw.bid.yahoo.com/api/reeldeal/v1/videos/{{videoId}}"
       }
     }
   </script>
@@ -153,10 +153,10 @@ const config = {
     }
   },
   "webservice": {
-    "listings": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/me/videos?status=ACTIVE",
-    "create": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos",
-    "edit": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}",
-    "delete": "https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}"
+    "listings": "https://tw.bid.yahoo.com/api/reeldeal/v1/me/videos?status=ACTIVE",
+    "create": "https://tw.bid.yahoo.com/api/reeldeal/v1/videos",
+    "edit": "https://tw.bid.yahoo.com/api/reeldeal/v1/videos/{{videoId}}",
+    "delete": "https://tw.bid.yahoo.com/api/reeldeal/v1/videos/{{videoId}}"
   }
 };
 
@@ -284,7 +284,7 @@ Set webservice config. Developers could set these config for save or gather exis
 `delete`：API for video delete. Developers colud apply for `{{videoId}}` string replacement.
 
 ```html
-<yahoo-pixelframe-drive webservice='{"listings":"https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/me/videos?status=ACTIVE","create":"https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos","edit":"https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}","delete":"https://canary-reeldeal.ec.yahoo.com:4443/api/reeldeal/v1/videos/{{videoId}}"}'>
+<yahoo-pixelframe-drive webservice='{"listings":"https://tw.bid.yahoo.com/api/reeldeal/v1/me/videos?status=ACTIVE","create":"https://tw.bid.yahoo.com/api/reeldeal/v1/videos","edit":"https://tw.bid.yahoo.com/api/reeldeal/v1/videos/{{videoId}}","delete":"https://tw.bid.yahoo.com/api/reeldeal/v1/videos/{{videoId}}"}'>
   ...
 </yahoo-pixelframe-drive>
 ```
