@@ -6,9 +6,9 @@ import {
   buttons as _fujiButtons
 } from './fuji-css.js';
 import Mustache from './mustache.js';
-import './wc-yahoo-pixelframe-uploader.js';
-import './wc-msc-dialogs.js';
-import './wc-msc-circle-progress.js';
+import 'https://unpkg.com/yahoo-pixelframe-uploader/mjs/wc-yahoo-pixelframe-uploader.js';
+import 'https://unpkg.com/msc-dialogs/mjs/wc-msc-dialogs.js';
+import 'https://unpkg.com/msc-circle-progress/mjs/wc-msc-circle-progress.js';
 
 /*
  reference:
