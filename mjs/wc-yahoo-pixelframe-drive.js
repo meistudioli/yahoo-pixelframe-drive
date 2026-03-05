@@ -510,7 +510,10 @@ ${_fujiButtons}
     &:has(.drive__gallery:empty)::after {
       position: absolute;
       inset-inline-start: 50%;
-      inset-block-start: 50%;
+      inset-block-start: calc(
+        50%
+        - (var(--ft-block-size) + var(--hr-size)) / 2 
+      );
       translate: -50% -50%;
 
       content: var(--listing-no-result-text);
@@ -1843,8 +1846,10 @@ export class YahooPixelframeDrive extends HTMLElement {
         }
       );
 
-      const unitsString = Mustache.render(templateUnit.innerHTML, { units });
-      gallery.insertAdjacentHTML('afterbegin', unitsString);
+      if (videos.length) {
+        const unitsString = Mustache.render(templateUnit.innerHTML, { units });
+        gallery.insertAdjacentHTML('afterbegin', unitsString);
+      }
     } catch(error) {
       console.warn(`${_wcl.classToTagName(this.constructor.name)}: ${error}`);
     
