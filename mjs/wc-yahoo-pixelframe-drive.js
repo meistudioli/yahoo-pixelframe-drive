@@ -9,6 +9,7 @@ import Mustache from './mustache.js';
 import 'https://unpkg.com/yahoo-pixelframe-uploader/mjs/wc-yahoo-pixelframe-uploader.js';
 import 'https://unpkg.com/msc-dialogs/mjs/wc-msc-dialogs.js';
 import 'https://unpkg.com/msc-circle-progress/mjs/wc-msc-circle-progress.js';
+import 'https://unpkg.com/msc-lightbox/mjs/wc-msc-lightbox.js';
 
 /*
  reference:
@@ -155,6 +156,7 @@ ${_fujiButtons}
   --icon-check: path('M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z');
   --icon-delete-forever: path('M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z');
   --icon-edit: path('M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z');
+  --icon-preview: path('M12 6c3.79 0 7.17 2.13 8.82 5.5C19.17 14.87 15.79 17 12 17s-7.17-2.13-8.82-5.5C4.83 8.13 8.21 6 12 6m0-2C7 4 2.73 7.11 1 11.5 2.73 15.89 7 19 12 19s9.27-3.11 11-7.5C21.27 7.11 17 4 12 4zm0 5c1.38 0 2.5 1.12 2.5 2.5S13.38 14 12 14s-2.5-1.12-2.5-2.5S10.62 9 12 9m0-2c-2.48 0-4.5 2.02-4.5 4.5S9.52 16 12 16s4.5-2.02 4.5-4.5S14.48 7 12 7z');
 
   /* dialogs-hr */
   --hr-margin: .75em;
@@ -770,6 +772,11 @@ ${_fujiButtons}
           --inset: auto auto 0 0;
           --icon: var(--icon-edit);
         }
+
+        &[data-action=preview] {
+          --inset: 0 0 auto auto;
+          --icon: var(--icon-preview);
+        }
       }
 
       .drive__gallery__unit__progress {
@@ -998,6 +1005,22 @@ ${_fujiButtons}
     content: var(--dialog-delete-button-cancel);
   }
 }
+
+/* msc-lightbox */
+msc-lightbox {
+  --msc-lightbox-background: linear-gradient(0deg, #29519F, #6499D1); /* https://ai.google.dev/ */
+  --msc-lightbox-border-radius: 18px;
+  --msc-lightbox-margin: 10dvmin;
+  --msc-lightbox-padding: 2px;
+
+  z-index: 2147483647;
+
+  .lightbox-content {
+    object-fit: contain;
+    display: block;
+    border-radius: 1em;
+  }
+}
 </style>
 
 <div class="main" ontouchstart="" tabindex="0">
@@ -1067,6 +1090,18 @@ ${JSON.stringify(defaults.uploader, null, 2)}
           </div>
         </form>
       </div>
+
+      <!-- msc-lightbox -->
+      <msc-lightbox type="auto">
+        <video
+          class="lightbox-content"
+          slot="content"
+          controls
+          muted
+          playsinline
+          controlslist="nodownload"
+        ></video>
+      </msc-lightbox>
     </div>
   </msc-dialogs>
 
@@ -1207,7 +1242,15 @@ templateUnit.innerHTML = `
     data-action="edit"
     title="edit"
   >
-    delete
+    edit
+  </button>
+  <button
+    type="button"
+    class="drive__gallery__unit__button"
+    data-action="preview"
+    title="preview"
+  >
+    edit
   </button>
 </div>
 {{/units}}
@@ -1468,6 +1511,8 @@ export class YahooPixelframeDrive extends HTMLElement {
       btnPick: this.shadowRoot.querySelector('.dialog-drive .drive__main .buttons'),
       infoMaxPickCount: this.shadowRoot.querySelector('.drive__main__action__info__maxpickcount'),
       infoPickCount: this.shadowRoot.querySelector('.drive__main__action__info__pickcount'),
+      lightbox: this.shadowRoot.querySelector('msc-lightbox'),
+      preview: this.shadowRoot.querySelector('.lightbox-content')
     };
 
     // config
@@ -1486,6 +1531,7 @@ export class YahooPixelframeDrive extends HTMLElement {
     this._onPick = this._onPick.bind(this);
     this._onSubmit = this._onSubmit.bind(this);
     this._onSearchInput = this._onSearchInput.bind(this);
+    this._onLightboxToggle = this._onLightboxToggle.bind(this);
 
     this._onDnD = this._onDnD.bind(this);
     this._hintHandler = this._hintHandler.bind(this);
@@ -1501,7 +1547,8 @@ export class YahooPixelframeDrive extends HTMLElement {
       formSearch,
       formEdit,
       formDelete,
-      drive
+      drive,
+      lightbox
     } = this.#nodes;
 
     if (error) {
@@ -1535,6 +1582,7 @@ export class YahooPixelframeDrive extends HTMLElement {
     formDelete.addEventListener('submit', this._deleteHandler, { signal });
     
     main.addEventListener('msc-dialogs-close', this._onDialogsClose, { signal });
+    lightbox.addEventListener('msc-lightbox-toggle', this._onLightboxToggle, { signal });
 
     // uploader
     supportedEvents.forEach(
@@ -1884,6 +1932,25 @@ export class YahooPixelframeDrive extends HTMLElement {
       return;
     }
 
+    // preview
+    if (action === 'preview') {
+      const {
+        result: {
+          resizeVideos = [],
+          url = ''
+        } = {}
+      } = data;
+      const source = resizeVideos?.[0]?.url || url;
+
+      if (!source) {
+        return;
+      }
+
+      this.#nodes.preview.src = source;
+      this.#nodes.lightbox.showPopover();
+      return;
+    }
+
     const dialog = this.#decorateDialog({ action, data });
     dialog.showModal();
   }
@@ -2228,7 +2295,7 @@ export class YahooPixelframeDrive extends HTMLElement {
 
     switch (action) {
       case 'drive': {
-        const { dialogEdit, dialogDelete } = this.#nodes;
+        const { dialogEdit, dialogDelete, lightbox } = this.#nodes;
 
         if (dialogEdit.open) {
           dialogEdit.close();
@@ -2236,6 +2303,10 @@ export class YahooPixelframeDrive extends HTMLElement {
 
         if (dialogDelete.open) {
           dialogDelete.close();
+        }
+
+        if (lightbox.open) {
+          lightbox.hidePopover();
         }
         break;
       }
@@ -2412,6 +2483,17 @@ export class YahooPixelframeDrive extends HTMLElement {
 
     infoPickCount.textContent = 0;
     this.#checkBtnPick();
+  }
+
+  _onLightboxToggle(evt) {
+    const { newState = '' } = evt.detail || {};
+    const { preview } = this.#nodes;
+
+    if (newState === 'open') {
+      preview.play();
+    } else {
+      preview.pause();
+    }
   }
 
   _onSubmit(evt) {
