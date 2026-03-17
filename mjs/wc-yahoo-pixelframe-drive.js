@@ -58,7 +58,7 @@ const defaults = {
     }
   },
   webservice: {
-    listings: 'https://tw.bid.yahoo.com/api/reeldeal/v1/me/videos?status=ACTIVE',
+    listings: 'https://tw.bid.yahoo.com/api/reeldeal/v1/me/videos?status=ACTIVE&&offset=0&limit=100',
     create: 'https://tw.bid.yahoo.com/api/reeldeal/v1/videos',
     edit: 'https://tw.bid.yahoo.com/api/reeldeal/v1/videos/{{videoId}}',
     delete: 'https://tw.bid.yahoo.com/api/reeldeal/v1/videos/{{videoId}}'
@@ -69,6 +69,7 @@ const booleanAttrs = []; // booleanAttrs default should be false
 const objectAttrs = ['uploader'];
 const custumEvents = {
   pick: 'yahoo-pixelframe-drive-pick',
+  delete: 'yahoo-pixelframe-drive-delete',
   error: 'yahoo-pixelframe-drive-error'
 };
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
@@ -1993,6 +1994,7 @@ export class YahooPixelframeDrive extends HTMLElement {
     const fetchUrl = new window.URL(apiUrl, base);
     const params = {
       includeVideoMetadata: true,
+      offset: 0,
       limit: 100
     };
 
@@ -2422,10 +2424,21 @@ export class YahooPixelframeDrive extends HTMLElement {
 
       case 'submit': {
         try {
-          const videoId = this.#data.listings[id]?.result?.id;
+          const {
+            result = {},
+            name: title = '',
+            description = ''
+          } = this.#data.listings[id] ?? {};
+          const { id: videoId } = result;
 
           await this.#fetchVideoDelete({ videoId });
           this.#deleteUnit(id);
+
+          this.#fireEvent(custumEvents.delete, {
+            title,
+            description,
+            ...window.structuredClone(result)
+          });
         } catch(error) {
           console.warn(`${_wcl.classToTagName(this.constructor.name)}: ${error}`);
         

@@ -302,8 +302,9 @@ Set webservice config. Developers could set these config for save or gather exis
 ## Events
 | Event Signature | Description |
 | ----------- | ----------- |
-| yahoo-pixelframe-drive-pick | Fired when <yahoo-pixelframe-drive /> user picked video files. Developers could gather picked information through `event.detail`. |
-| yahoo-pixelframe-drive-error | Fired when <yahoo-pixelframe-drive /> error occured. Developers could gather information through `event.detail`. |
+| yahoo-pixelframe-drive-pick | Dispatched when a user selects video files. Developers can access the selection details via `event.detail`. |
+| yahoo-pixelframe-drive-delete | Dispatched when a user deletes a video file from <yahoo-pixelframe-drive />. Developers can access the deleted file's metadata via `event.detail`. |
+| yahoo-pixelframe-drive-error | Triggered when an error occurs. Developers can retrieve error information via `event.detail`. |
 
 ## Mathods
 | Mathod Signature | Description |
